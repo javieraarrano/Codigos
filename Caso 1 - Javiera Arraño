@@ -1,10 +1,10 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score, f1_score
 
-df = pd.read_csv('ruta/dataset_Caso_1.csv')  
+# Cargar el archivo CSV
+df = pd.read_csv('ruta/dataset_Caso_1.csv') 
 
 # Preprocesamiento: One-Hot Encoding para las columnas categóricas (x3 y x4)
 df_encoded = pd.get_dummies(df, columns=['x3', 'x4'], drop_first=True)
@@ -16,26 +16,26 @@ y = df_encoded['target']
 # Dividir los datos en entrenamiento (80%) y prueba (20%)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Entrenar un modelo de regresión logística
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train, y_train)
+# Entrenar un modelo de Random Forest con class_weight='balanced'
+model_balanced = RandomForestClassifier(n_estimators=100, random_state=42, class_weight='balanced')
+model_balanced.fit(X_train, y_train)
 
 # Predicciones en los conjuntos de entrenamiento y prueba
-y_train_pred = model.predict(X_train)
-y_test_pred = model.predict(X_test)
+y_train_pred_balanced = model_balanced.predict(X_train)
+y_test_pred_balanced = model_balanced.predict(X_test)
 
 # Probabilidades para calcular AUC
-y_train_prob = model.predict_proba(X_train)[:, 1]
-y_test_prob = model.predict_proba(X_test)[:, 1]
+y_train_prob_balanced = model_balanced.predict_proba(X_train)[:, 1]
+y_test_prob_balanced = model_balanced.predict_proba(X_test)[:, 1]
 
-# Calcular métricas: AUC y F1-score
-auc_train = roc_auc_score(y_train, y_train_prob)
-auc_test = roc_auc_score(y_test, y_test_prob)
-f1_train = f1_score(y_train, y_train_pred)
-f1_test = f1_score(y_test, y_test_pred)
+# Calcular métricas: AUC y F1-score en porcentaje con class_weight='balanced'
+auc_train_balanced = roc_auc_score(y_train, y_train_prob_balanced) * 100
+auc_test_balanced = roc_auc_score(y_test, y_test_prob_balanced) * 100
+f1_train_balanced = f1_score(y_train, y_train_pred_balanced) * 100
+f1_test_balanced = f1_score(y_test, y_test_pred_balanced) * 100
 
 # Mostrar resultados
-print(f"AUC en entrenamiento: {auc_train}")
-print(f"AUC en prueba: {auc_test}")
-print(f"F1-score en entrenamiento: {f1_train}")
-print(f"F1-score en prueba: {f1_test}")
+print(f"AUC en entrenamiento (balanced): {auc_train_balanced:.2f}%")
+print(f"AUC en prueba (balanced): {auc_test_balanced:.2f}%")
+print(f"F1-score en entrenamiento (balanced): {f1_train_balanced:.2f}%")
+print(f"F1-score en prueba (balanced): {f1_test_balanced:.2f}%")
